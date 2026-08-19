@@ -3332,7 +3332,7 @@ namespace settings {
               && !widgetHasPlacementAfterLaneEdit(ctx.config, lanePath, items, entryName);
           removeClose = [&selectedLaneWidgets = ctx.selectedLaneWidgets, setOverride = ctx.setOverride,
                          clearOverride = ctx.clearOverride, items = std::move(items), lanePath, entryName,
-                         removeInstance, laneKey, i]() {
+                         removeInstance, laneKey, i, requestRebuild = ctx.requestRebuild]() {
             // Prune token of deleted widget and shift other higher indexes down
             const std::string prefix = std::string(laneKey) + "#";
             std::erase_if(selectedLaneWidgets, [&, prefix, i](std::string& token) {
@@ -3349,6 +3349,9 @@ namespace settings {
             setOverride(lanePath, items);
             if (removeInstance) {
               clearOverride({"widget", entryName});
+            }
+            if (requestRebuild) {
+              requestRebuild();
             }
           };
         }
