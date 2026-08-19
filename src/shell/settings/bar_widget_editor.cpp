@@ -3330,8 +3330,22 @@ namespace settings {
           items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
           const bool removeInstance = isGuiManagedNamedWidgetInstance(ctx, entryName)
               && !widgetHasPlacementAfterLaneEdit(ctx.config, lanePath, items, entryName);
-          removeClose = [setOverride = ctx.setOverride, clearOverride = ctx.clearOverride, items = std::move(items),
-                         lanePath, entryName, removeInstance]() {
+          removeClose = [&selectedLaneWidgets = ctx.selectedLaneWidgets, setOverride = ctx.setOverride,
+                         clearOverride = ctx.clearOverride, items = std::move(items), lanePath, entryName,
+                         removeInstance, laneKey, i]() {
+            // Prune token of deleted widget and shift other higher indexes down
+            const std::string prefix = std::string(laneKey) + "#";
+            std::erase_if(selectedLaneWidgets, [&, prefix, i](std::string& token) {
+              if (!token.starts_with(prefix))
+                return false;
+              const auto idx = static_cast<std::size_t>(std::strtol(token.c_str() + prefix.size(), nullptr, 10));
+              if (idx == i)
+                return true;
+              if (idx > i)
+                token = prefix + std::to_string(idx - 1);
+              return false;
+            });
+
             setOverride(lanePath, items);
             if (removeInstance) {
               clearOverride({"widget", entryName});
