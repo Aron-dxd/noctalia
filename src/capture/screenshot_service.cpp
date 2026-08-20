@@ -1483,10 +1483,16 @@ void ScreenshotService::onCaptureComplete(
 }
 
 std::filesystem::path ScreenshotService::defaultPicturesDirectory() const {
-  if (const char* home = std::getenv("HOME"); home != nullptr && home[0] != '\0') {
-    return std::filesystem::path(home) / "Pictures";
+  std::string rawPath;
+  if (const char* xdgPictures = std::getenv("XDG_PICTURES_DIR"); xdgPictures != nullptr && xdgPictures[0] != '\0') {
+    rawPath = xdgPictures;
+  } else if (const char* home = std::getenv("HOME"); home != nullptr && home[0] != '\0') {
+    rawPath = std::string(home) + "/Pictures";
+  } else {
+    return std::filesystem::path("/tmp");
   }
-  return std::filesystem::path("/tmp");
+
+  return FileUtils::expandUserPath(FileUtils::expandEnvVars(rawPath));
 }
 
 std::filesystem::path ScreenshotService::outputDirectory(const OutputOptions& options) const {
